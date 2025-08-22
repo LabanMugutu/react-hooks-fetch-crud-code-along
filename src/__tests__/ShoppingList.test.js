@@ -20,14 +20,9 @@ afterAll(() => server.close());
 test("displays all the items from the server after the initial render", async () => {
   render(<ShoppingList />);
 
-  const yogurt = await screen.findByText(/Yogurt/);
-  expect(yogurt).toBeInTheDocument();
-
-  const pomegranate = await screen.findByText(/Pomegranate/);
-  expect(pomegranate).toBeInTheDocument();
-
-  const lettuce = await screen.findByText(/Lettuce/);
-  expect(lettuce).toBeInTheDocument();
+  expect(await screen.findByText(/Yogurt/)).toBeInTheDocument();
+  expect(await screen.findByText(/Pomegranate/)).toBeInTheDocument();
+  expect(await screen.findByText(/Lettuce/)).toBeInTheDocument();
 });
 
 test("adds a new item to the list when the ItemForm is submitted", async () => {
@@ -35,15 +30,15 @@ test("adds a new item to the list when the ItemForm is submitted", async () => {
 
   const dessertCount = screen.queryAllByText(/Dessert/).length;
 
-  fireEvent.change(screen.queryByLabelText(/Name/), {
+  fireEvent.change(screen.getByLabelText(/Name/i), {
     target: { value: "Ice Cream" },
   });
 
-  fireEvent.change(screen.queryByLabelText(/Category/), {
+  fireEvent.change(screen.getByLabelText(/Category/i), {
     target: { value: "Dessert" },
   });
 
-  fireEvent.submit(screen.queryByText(/Add to List/));
+  fireEvent.submit(screen.getByText(/Add to List/i));
 
   const iceCream = await screen.findByText(/Ice Cream/);
   expect(iceCream).toBeInTheDocument();
@@ -53,31 +48,27 @@ test("adds a new item to the list when the ItemForm is submitted", async () => {
 
   // Rerender the component to ensure the item was persisted
   rerender(<ShoppingList />);
-
-  const rerenderedIceCream = await screen.findByText(/Ice Cream/);
-  expect(rerenderedIceCream).toBeInTheDocument();
+  expect(await screen.findByText(/Ice Cream/)).toBeInTheDocument();
 });
 
 test("updates the isInCart status of an item when the Add/Remove from Cart button is clicked", async () => {
   const { rerender } = render(<ShoppingList />);
 
-  const addButtons = await screen.findAllByText(/Add to Cart/);
+  const addButtons = await screen.findAllByText(/Add to Cart/i);
 
   expect(addButtons.length).toBe(3);
-  expect(screen.queryByText(/Remove From Cart/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Remove From Cart/i)).not.toBeInTheDocument();
 
   fireEvent.click(addButtons[0]);
 
-  const removeButton = await screen.findByText(/Remove From Cart/);
+  const removeButton = await screen.findByText(/Remove From Cart/i);
   expect(removeButton).toBeInTheDocument();
 
   // Rerender the component to ensure the item was persisted
   rerender(<ShoppingList />);
 
-  const rerenderedAddButtons = await screen.findAllByText(/Add to Cart/);
-  const rerenderedRemoveButtons = await screen.findAllByText(
-    /Remove From Cart/
-  );
+  const rerenderedAddButtons = await screen.findAllByText(/Add to Cart/i);
+  const rerenderedRemoveButtons = await screen.findAllByText(/Remove From Cart/i);
 
   expect(rerenderedAddButtons.length).toBe(2);
   expect(rerenderedRemoveButtons.length).toBe(1);
@@ -86,19 +77,19 @@ test("updates the isInCart status of an item when the Add/Remove from Cart butto
 test("removes an item from the list when the delete button is clicked", async () => {
   const { rerender } = render(<ShoppingList />);
 
-  const yogurt = await screen.findByText(/Yogurt/);
+  const yogurt = await screen.findByText(/Yogurt/i);
   expect(yogurt).toBeInTheDocument();
 
-  const deleteButtons = await screen.findAllByText(/Delete/);
+  const deleteButtons = await screen.findAllByText(/Delete/i);
   fireEvent.click(deleteButtons[0]);
 
-  await waitForElementToBeRemoved(() => screen.queryByText(/Yogurt/));
+  await waitForElementToBeRemoved(() => screen.queryByText(/Yogurt/i));
 
   // Rerender the component to ensure the item was persisted
   rerender(<ShoppingList />);
 
-  const rerenderedDeleteButtons = await screen.findAllByText(/Delete/);
+  const rerenderedDeleteButtons = await screen.findAllByText(/Delete/i);
 
   expect(rerenderedDeleteButtons.length).toBe(2);
-  expect(screen.queryByText(/Yogurt/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Yogurt/i)).not.toBeInTheDocument();
 });

@@ -1,39 +1,56 @@
+// src/mocks/handlers.js
 import { rest } from "msw";
-import { data } from "./data";
 
-let items = [...data];
-let id = items[items.length - 1].id;
+// Initial data
+let items = [
+  { id: 1, name: "Yogurt", category: "Dairy", isInCart: false },
+  { id: 2, name: "Pomegranate", category: "Fruit", isInCart: false },
+  { id: 3, name: "Lettuce", category: "Vegetable", isInCart: false },
+];
 
-export function resetData() {
-  items = [...data];
-  id = items[items.length - 1].id;
-}
+// Keep track of IDs for new items
+let nextId = items.length + 1;
 
 export const handlers = [
-  rest.get("http://localhost:4000/items", (req, res, ctx) => {
-    return res(ctx.json(items));
+  // GET all items
+  rest.get("/items", (req, res, ctx) => {
+    return res(ctx.status(200), ctx.json(items));
   }),
-  rest.post("http://localhost:4000/items", (req, res, ctx) => {
-    id++;
-    const item = { id, ...req.body };
+
+  // POST new item
+  rest.post("/items", async (req, res, ctx) => {
+    const newItem = await req.json();
+    // ✅ Spread newItem first, then overwrite id and isInCart
+    const item = { ...newItem, id: nextId++, isInCart: false };
     items.push(item);
-    return res(ctx.json(item));
+    return res(ctx.status(201), ctx.json(item));
   }),
-  rest.delete("http://localhost:4000/items/:id", (req, res, ctx) => {
+
+  // PATCH update an item
+  rest.patch("/items/:id", async (req, res, ctx) => {
     const { id } = req.params;
-    if (isNaN(parseInt(id))) {
-      return res(ctx.status(404), ctx.json({ message: "Invalid ID" }));
-    }
-    items = items.filter((q) => q.id !== parseInt(id));
-    return res(ctx.json({}));
+    const updates = await req.json();
+    items = items.map((item) =>
+      item.id === parseInt(id) ? { ...item, ...updates } : item
+    );
+    const updatedItem = items.find((i) => i.id === parseInt(id));
+    return res(ctx.status(200), ctx.json(updatedItem));
   }),
-  rest.patch("http://localhost:4000/items/:id", (req, res, ctx) => {
+
+  // DELETE item
+  rest.delete("/items/:id", (req, res, ctx) => {
     const { id } = req.params;
-    if (isNaN(parseInt(id))) {
-      return res(ctx.status(404), ctx.json({ message: "Invalid ID" }));
-    }
-    const itemIndex = items.findIndex((item) => item.id === parseInt(id));
-    items[itemIndex] = { ...items[itemIndex], ...req.body };
-    return res(ctx.json(items[itemIndex]));
+    items = items.filter((item) => item.id !== parseInt(id));
+    return res(ctx.status(204));
   }),
 ];
+
+// ✅ Utility to reset items between tests
+export function resetData() {
+  items = [
+    { id: 1, name: "Yogurt", category: "Dairy", isInCart: false },
+    { id: 2, name: "Pomegranate", category: "Fruit", isInCart: false },
+    { id: 3, name: "Lettuce", category: "Vegetable", isInCart: false },
+  ];
+  nextId = items.length + 1;
+}
